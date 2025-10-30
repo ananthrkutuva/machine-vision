@@ -1,5 +1,6 @@
 import cv2
 from matplotlib import pyplot as plt
+import numpy as np
 
 # Image path
 path = "/home/akutuva/ros2_ws/src/machine-vision/example_handlebars.jpg"
