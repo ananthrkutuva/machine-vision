@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 # Image path
-path = "/home/akutuva/ros2_ws/src/machine-vision/example_handlebars.jpg"
+path = "/home/akutuva/ros2_ws/src/machine-vision/data/example_handlebars.jpg"
 
 # Input image into openCV
 original_img = cv2.imread(path, cv2.IMREAD_COLOR)
