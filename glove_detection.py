@@ -9,14 +9,17 @@ path = "/home/akutuva/ros2_ws/src/machine-vision/data/example_handlebars.jpg"
 original_img = cv2.imread(path, cv2.IMREAD_COLOR)
 img_HSV = cv2.cvtColor(original_img, cv2.COLOR_BGR2HSV)
 
-# Create HSV bounds for color of gloves and color of sky
+# Create HSV bounds for color of gloves
 red_lower = np.array([110, 145, 145])
 red_upper = np.array([179, 255, 255])
 
+# Create a mask that will filter out all pixels outside the given HSV range. The pixels within the range will be white, all others will be black, a binary image.
 red_mask = cv2.inRange(img_HSV, red_lower, red_upper)
 
+# Generate contours around all white pixels in the image
 contours, hierarchy = cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
+# Make lists to hold many arrays of the x and y coordinates of the contour pixels. Each array in the list contains the respective x coordinates of each contour
 x_coords = []
 y_coords = []
 
@@ -26,6 +29,8 @@ for contour in contours:
     contour_y_vals = reshaped_contour[:, 1]
     x_coords.append(contour_x_vals)
     y_coords.append(contour_y_vals)
+
+print(x_coords)
 
 x_arr = np.array(x_coords, dtype=object)
 y_arr = np.array(y_coords, dtype=object)
@@ -41,6 +46,15 @@ middle_threshold_val = min_x_vals > 300
 
 idx_threshold = np.argmax(middle_threshold_val)
 
+left_glove_arrs = np.empty(0)
+
+left_glove_arrs = np.concatenate(x_arr[0:idx_threshold])
+
+print(left_glove_arrs)
+
+avg_left_x = np.round(np.mean(left_glove_arrs))
+
+print(avg_left_x)
 # print("X Array")
 # print(x_arr)
 
