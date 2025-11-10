@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # Video path
 import os
-path = "data/SamplePOV2.mp4"
+path = "data/SamplePOV5.mp4"
 print(os.path.exists(path))
 
 
@@ -34,15 +34,15 @@ if __name__ == '__main__' :
         sys.exit()
 
     #Create Bounding Boxes
-    l_bb_x = 300
-    l_bb_y = 750
-    l_bb_w = 400
-    l_bb_h = 250
+    l_bb_x = 350
+    l_bb_y = 600
+    l_bb_w = 450
+    l_bb_h = 230
 
     r_bb_x = 1150
     r_bb_y = 650
     r_bb_w = 400
-    r_bb_h = 250
+    r_bb_h = 230
    
 
     l_bbox = (l_bb_x, l_bb_y, l_bb_w, l_bb_h)
@@ -151,70 +151,70 @@ if __name__ == '__main__' :
         cv2.imshow("L Edges ROI", l_edges)
         cv2.imshow("R Edges ROI", r_edges)
 
-        # l_lines = cv2.HoughLinesP(l_edges, 1, np.pi/180, threshold=40, minLineLength=20, maxLineGap=10)
-        # r_lines = cv2.HoughLinesP(r_edges, 1, np.pi/180, threshold=40, minLineLength=20, maxLineGap=10)
+        l_lines = cv2.HoughLinesP(l_edges, 1, np.pi/180, threshold=32, minLineLength=30, maxLineGap=15)
+        r_lines = cv2.HoughLinesP(r_edges, 1, np.pi/180, threshold=32, minLineLength=30, maxLineGap=15)
 
-        # b_thresh = 50
+        b_thresh = 50
 
-        # if l_lines is not None:
-        #     for line in l_lines:
-        #         x1, y1, x2, y2 = line[0]
-        #         cv2.line(l_roi, (x1,y1), (x2, y2), (0,255,0), 2) #from testing x2 is always bigger than x1 :)
+        if l_lines is not None:
+            for line in l_lines:
+                x1, y1, x2, y2 = line[0]
+                cv2.line(l_roi, (x1,y1), (x2, y2), (0,255,0), 2) #from testing x2 is always bigger than x1 :)
 
-        # if r_lines is not None:
-        #     for line in r_lines:
-        #         x1, y1, x2, y2 = line[0]
-        #         cv2.line(r_roi, (x1,y1), (x2, y2), (0,255,0), 2) #from testing x2 is always bigger than x1 :)
+        if r_lines is not None:
+            for line in r_lines:
+                x1, y1, x2, y2 = line[0]
+                cv2.line(r_roi, (x1,y1), (x2, y2), (0,255,0), 2) #from testing x2 is always bigger than x1 :)
 
-        # l_lines = [l[0] for l in l_lines]
-        # r_lines = [l[0] for l in r_lines]
-        # l_mid_x_list = []
-        # l_mid_y_list = []
-        # r_mid_x_list = []
-        # r_mid_y_list = []
+        l_lines = [l[0] for l in l_lines]
+        r_lines = [l[0] for l in r_lines]
+        l_mid_x_list = []
+        l_mid_y_list = []
+        r_mid_x_list = []
+        r_mid_y_list = []
 
-        # for (x1, y1, x2, y2) in l_lines:
-        #     l_mid_x_list.append((x1 + x2) / 2)
-        #     l_mid_y_list.append((y1 + y2) / 2)
+        for (x1, y1, x2, y2) in l_lines:
+            l_mid_x_list.append((x1 + x2) / 2)
+            l_mid_y_list.append((y1 + y2) / 2)
 
-        # for (x1, y1, x2, y2) in r_lines:
-        #     r_mid_x_list.append((x1 + x2) / 2)
-        #     r_mid_y_list.append((y1 + y2) / 2)
+        for (x1, y1, x2, y2) in r_lines:
+            r_mid_x_list.append((x1 + x2) / 2)
+            r_mid_y_list.append((y1 + y2) / 2)
 
-        # l_avg_mid_x = int(sum(l_mid_x_list) / len(l_mid_x_list))
-        # l_avg_mid_y = int(sum(l_mid_y_list) / len(l_mid_y_list))
-        # r_avg_mid_x = int(sum(r_mid_x_list) / len(r_mid_x_list))
-        # r_avg_mid_y = int(sum(r_mid_y_list) / len(r_mid_y_list))
+        l_avg_mid_x = int(sum(l_mid_x_list) / len(l_mid_x_list))
+        l_avg_mid_y = int(sum(l_mid_y_list) / len(l_mid_y_list))
+        r_avg_mid_x = int(sum(r_mid_x_list) / len(r_mid_x_list))
+        r_avg_mid_y = int(sum(r_mid_y_list) / len(r_mid_y_list))
 
 
-        # l_roi_x = 250  # constant inside left ROI
-        # l_roi_y = l_avg_mid_y  # y from average of Hough lines
-        # # Convert to frame coordinates
-        # l_frame_x = int(l_bbox[0] + l_roi_x)
-        # l_frame_y = int(l_bbox[1] + l_roi_y)
+        l_roi_x = 250  # constant inside left ROI
+        l_roi_y = l_avg_mid_y  # y from average of Hough lines
+        # Convert to frame coordinates
+        l_frame_x = int(l_bbox[0] + l_roi_x)
+        l_frame_y = int(l_bbox[1] + l_roi_y)
 
-        # # Draw in full frame
-        # cv2.circle(frame, (l_frame_x, l_frame_y), 8, (0, 0, 255), -1)
+        # Draw in full frame
+        cv2.circle(frame, (l_frame_x, l_frame_y), 8, (0, 0, 255), -1)
 
-        # r_roi_x = 200  # constant inside right ROI
-        # r_roi_y = r_avg_mid_y  # y from average of Hough lines
+        r_roi_x = 200  # constant inside right ROI
+        r_roi_y = r_avg_mid_y  # y from average of Hough lines
 
-        # # Convert to frame coordinates
-        # r_frame_x = int(r_bbox[0] + r_roi_x)
-        # r_frame_y = int(r_bbox[1] + r_roi_y)
+        # Convert to frame coordinates
+        r_frame_x = int(r_bbox[0] + r_roi_x)
+        r_frame_y = int(r_bbox[1] + r_roi_y)
 
-        # # Draw in full frame
-        # cv2.circle(frame, (r_frame_x, r_frame_y), 8, (0, 0, 255), -1)
-        #   # red filled
-        # cv2.line(frame, (l_frame_x, l_frame_y), (r_frame_x, r_frame_y), (255,0,0), 5)
+        # Draw in full frame
+        cv2.circle(frame, (r_frame_x, r_frame_y), 8, (0, 0, 255), -1)
+          # red filled
+        cv2.line(frame, (l_frame_x, l_frame_y), (r_frame_x, r_frame_y), (255,0,0), 5)
 
         cv2.imshow("L ROI", l_roi)
         cv2.imshow("R ROI", r_roi)
         cv2.imshow("Tracking", frame)
 
-        # #Go through the lines and calc line for tracking
-        # angle_rad = math.atan2(r_frame_y-l_frame_y, r_frame_x-l_frame_x) # angle in radians
-        # theta_list.append(angle_rad)
+        #Go through the lines and calc line for tracking
+        angle_rad = math.atan2(r_frame_y-l_frame_y, r_frame_x-l_frame_x) # angle in radians
+        theta_list.append(angle_rad)
 
         
 
@@ -223,58 +223,58 @@ if __name__ == '__main__' :
 
         
 
-    # print(theta_list)
-    # print(t_list)
-    # print(len(theta_list))
-    # print(len(t_list))
+    print(theta_list)
+    print(t_list)
+    print(len(theta_list))
+    print(len(t_list))
 
-    # map_x_list = [0]
-    # map_y_list = [0]
+    map_x_list = [0]
+    map_y_list = [0]
 
-    # velocity = 3 #m/s constant change later
-    # wheel_base = 1.237 #meters
-    # h = delay/1000 #timestep in s
+    velocity = 3 #m/s constant change later
+    wheel_base = 1.237 #meters
+    h = delay/1000 #timestep in s
 
-    # #Tune Theta list by callibrated value
-    # offset = -0.05 # add 0.05 rad to all values
+    #Tune Theta list by callibrated value
+    offset = -0.05 # add 0.05 rad to all values
 
-    # theta_list = [theta + offset for theta in theta_list]
+    theta_list = [theta + offset for theta in theta_list]
 
 
-    # for t in range(len(t_list)):
-    #     old_x = map_x_list[-1]
-    #     old_y = map_y_list[-1]
-    #     print(t)
-    #     d = velocity * h
-    #     R = wheel_base / math.tan(theta_list[t])
-    #     delta_phi = d / R 
+    for t in range(len(t_list)):
+        old_x = map_x_list[-1]
+        old_y = map_y_list[-1]
+        print(t)
+        d = velocity * h
+        R = wheel_base / math.tan(theta_list[t])
+        delta_phi = d / R 
 
-    #     dx = R * (1 - math.cos(delta_phi))
-    #     dy = R * math.sin(delta_phi)
+        dx = R * (1 - math.cos(delta_phi))
+        dy = R * math.sin(delta_phi)
 
-    #     x = old_x + dx
-    #     y = old_y + dy
+        x = old_x + dx
+        y = old_y + dy
 
-    #     map_x_list.append(x)
-    #     map_y_list.append(y)
+        map_x_list.append(x)
+        map_y_list.append(y)
 
-    # print(map_x_list)
-    # print(map_y_list)
-    # print(len(map_y_list))
+    print(map_x_list)
+    print(map_y_list)
+    print(len(map_y_list))
 
-    # init_x = map_x_list[0]
-    # init_y = map_y_list[0]
-    # final_x = map_x_list[-1]
-    # final_y = map_y_list[-1]
+    init_x = map_x_list[0]
+    init_y = map_y_list[0]
+    final_x = map_x_list[-1]
+    final_y = map_y_list[-1]
 
-    # plt.plot(map_x_list, map_y_list)
-    # plt.scatter(init_x, init_y, c="green")
-    # plt.scatter(final_x, final_y, c="red")
-    # plt.xlabel("X Coordinates")
-    # plt.ylabel("Y Coordinates")
-    # plt.title("Plot of Bicycle Position")
+    plt.plot(map_x_list, map_y_list)
+    plt.scatter(init_x, init_y, c="green")
+    plt.scatter(final_x, final_y, c="red")
+    plt.xlabel("X Coordinates")
+    plt.ylabel("Y Coordinates")
+    plt.title("Plot of Bicycle Position")
     # plt.axis('equal')
-    # plt.show()
-    # plt.pause(1)
-    # plt.close()
+    plt.show()
+    plt.pause(1)
+    plt.close()
 
