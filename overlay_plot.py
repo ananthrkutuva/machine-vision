@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Make a dataframe from the GoPro GPS Data
-df = pd.read_csv("data/gpsdata.csv")
+df = pd.read_csv("data/downhilldata.csv")
 
 # Take out the relevant data from the CSV File
 relevant_data = df[["date", "GPS (Lat.) [deg]", "GPS (Long.) [deg]"]]
@@ -18,29 +18,43 @@ longitude_list = df["GPS (Long.) [deg]"].to_list()
 # print(longitude_list)
 
 # Setup a projection using the pyproj library (lat long to meters)
-p = Proj(proj='utm',zone=19, ellps='WGS84', preserve_units=False)
+p = Proj(proj='utm',zone=10, ellps='WGS84', preserve_units=False)
 
 # Allocate x and y coordinates
-x_list = []
-y_list = []
+x_list_projected = []
+y_list_projected = []
 
 # Loop through each of the latitude and longitude values and append to the lists
 for lat, lon in zip(latitude_list, longitude_list):
     x_new, y_new = p(lon, lat)
-    x_list.append(x_new - 313462.56)
-    y_list.append(y_new - 4684648.4)
+    x_list_projected.append(x_new)
+    y_list_projected.append(y_new)
 
-# print(x_list)
-# print(y_list)
+# Record the maximum value in both the x and y lists
+max_x_value = max(x_list_projected)
+max_y_value = max(y_list_projected)
 
-# Set the initial and final x and y coordinates to be plotted
-init_x = x_list[0]
-init_y = y_list[0]
-final_x = x_list[-1]
-final_y = y_list[-1]
+# The final value in the list is how much to shift the graph over by
+x_shift = x_list_projected[-1]
+y_shift = y_list_projected[-1]
+
+# Allocate space for the shifted list
+x_list_final = []
+y_list_final = []
+
+# Shift all values
+for x, y in zip(x_list_projected, y_list_projected):
+    x_list_final.append(x - x_shift)
+    y_list_final.append(y - y_shift)
+
+# Record the initial and final x and y coordinates
+init_x = x_list_final[0]
+init_y = y_list_final[0]
+final_x = x_list_final[-1]
+final_y = y_list_final[-1]
 
 # Plot everything
-plt.plot(x_list, y_list)
+plt.plot(x_list_final, y_list_final)
 plt.scatter(init_x, init_y, c="green")
 plt.scatter(final_x, final_y, c="red")
 plt.xlabel("X Distance (m)")
