@@ -223,10 +223,10 @@ if __name__ == '__main__' :
 
         
 
-    print(theta_list)
-    print(t_list)
-    print(len(theta_list))
-    print(len(t_list))
+    # print(theta_list)
+    # print(t_list)
+    # print(len(theta_list))
+    # print(len(t_list))
 
     map_x_list = [0]
     map_y_list = [0]
@@ -237,19 +237,19 @@ if __name__ == '__main__' :
 
     #Tune Theta list by callibrated value
     offset = -0.05 # add 0.05 rad to all values
-    steer_scale = 10.0  # try 3–10× empirically
+    steer_scale = 3  # try 3–10× empirically
     theta_list = [theta * steer_scale + offset for theta in theta_list]
 
 
     for t in range(len(t_list)):
         old_x = map_x_list[-1]
         old_y = map_y_list[-1]
-        print(t)
+        # print(t)
         d = velocity * h
         R = wheel_base / math.tan(theta_list[t])
         delta_phi = d / R 
 
-        dx = R * (1 - math.cos(delta_phi))
+        dx = R * (1 - math.cos(delta_phi)) * 100
         dy = R * math.sin(delta_phi)
 
         x = old_x + dx
@@ -258,9 +258,9 @@ if __name__ == '__main__' :
         map_x_list.append(x)
         map_y_list.append(y)
 
-    print(map_x_list)
-    print(map_y_list)
-    print(len(map_y_list))
+    # print(map_x_list)
+    # print(map_y_list)
+    # print(len(map_y_list))
 
     init_x = map_x_list[0]
     init_y = map_y_list[0]
