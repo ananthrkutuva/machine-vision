@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import sys
 import math
+import matplotlib.pyplot as plt
 
 # Video path
 import os
@@ -53,6 +54,9 @@ if __name__ == '__main__' :
     fps_target = 30
 
     # Compute wait time per frame in ms
+    video_fps = vid.get(cv2.CAP_PROP_FPS)
+    comp_delay = int(1000 / video_fps)
+
     delay = int(1000 / fps_target)
 
 
@@ -89,11 +93,11 @@ if __name__ == '__main__' :
         if l_ok & r_ok:
             p1 = (int(l_bbox[0] - buffer), int(l_bbox[1] - buffer)) #make sure bbox isnt in ROI frame
             p2 = (int(l_bbox[0] + l_bbox[2] + buffer), int(l_bbox[1] + l_bbox[3] + buffer))
-            #cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
+            cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
 
             p1 = (int(r_bbox[0] - buffer), int(r_bbox[1] - buffer)) #make sure bbox isnt in ROI frame
             p2 = (int(r_bbox[0] + r_bbox[2] + buffer), int(r_bbox[1] + r_bbox[3] + buffer))
-            #cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
+            cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
         else:
             cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
 
@@ -112,13 +116,13 @@ if __name__ == '__main__' :
         r_grey = cv2.cvtColor(r_roi, cv2.COLOR_BGR2GRAY)
 
         #Show
-        #cv2.imshow("L Greyscale ROI", l_grey)
-        #cv2.imshow("R Greyscale ROI", r_grey)
+        cv2.imshow("L Greyscale ROI", l_grey)
+        cv2.imshow("R Greyscale ROI", r_grey)
 
         l_edges = cv2.Canny(l_grey, 150, 300, apertureSize=3)
         r_edges = cv2.Canny(r_grey, 150, 300, apertureSize=3)
-        #cv2.imshow("L Edges ROI", l_edges)
-        #cv2.imshow("R Edges ROI", r_edges)
+        cv2.imshow("L Edges ROI", l_edges)
+        cv2.imshow("R Edges ROI", r_edges)
 
         l_lines = cv2.HoughLinesP(l_edges, 1, np.pi/180, threshold=40, minLineLength=20, maxLineGap=10)
         r_lines = cv2.HoughLinesP(r_edges, 1, np.pi/180, threshold=40, minLineLength=20, maxLineGap=10)
@@ -128,12 +132,12 @@ if __name__ == '__main__' :
         if l_lines is not None:
             for line in l_lines:
                 x1, y1, x2, y2 = line[0]
-                #cv2.line(l_roi, (x1,y1), (x2, y2), (0,255,0), 2) #from testing x2 is always bigger than x1 :)
+                cv2.line(l_roi, (x1,y1), (x2, y2), (0,255,0), 2) #from testing x2 is always bigger than x1 :)
 
         if r_lines is not None:
             for line in r_lines:
                 x1, y1, x2, y2 = line[0]
-                #cv2.line(r_roi, (x1,y1), (x2, y2), (0,255,0), 2) #from testing x2 is always bigger than x1 :)
+                cv2.line(r_roi, (x1,y1), (x2, y2), (0,255,0), 2) #from testing x2 is always bigger than x1 :)
 
         l_lines = [l[0] for l in l_lines]
         r_lines = [l[0] for l in r_lines]
@@ -163,7 +167,7 @@ if __name__ == '__main__' :
         l_frame_y = int(l_bbox[1] + l_roi_y)
 
         # Draw in full frame
-        #cv2.circle(frame, (l_frame_x, l_frame_y), 8, (0, 0, 255), -1)
+        cv2.circle(frame, (l_frame_x, l_frame_y), 8, (0, 0, 255), -1)
 
         r_roi_x = 200  # constant inside right ROI
         r_roi_y = r_avg_mid_y  # y from average of Hough lines
@@ -173,12 +177,12 @@ if __name__ == '__main__' :
         r_frame_y = int(r_bbox[1] + r_roi_y)
 
         # Draw in full frame
-        #cv2.circle(frame, (r_frame_x, r_frame_y), 8, (0, 0, 255), -1)
+        cv2.circle(frame, (r_frame_x, r_frame_y), 8, (0, 0, 255), -1)
           # red filled
         cv2.line(frame, (l_frame_x, l_frame_y), (r_frame_x, r_frame_y), (255,0,0), 5)
 
-        #cv2.imshow("L ROI", l_roi)
-        #cv2.imshow("R ROI", r_roi)
+        cv2.imshow("L ROI", l_roi)
+        cv2.imshow("R ROI", r_roi)
         cv2.imshow("Tracking", frame)
 
         #Go through the lines and calc line for tracking
@@ -204,16 +208,25 @@ if __name__ == '__main__' :
     wheel_base = 1.237 #meters
     h = delay/1000 #timestep in s
 
+    #Tune Theta list by callibrated value
+    offset = -0.05 # add 0.05 rad to all values
+
+    theta_list = [theta + offset for theta in theta_list]
+
 
     for t in range(len(t_list)):
         old_x = map_x_list[-1]
         old_y = map_y_list[-1]
         print(t)
-        d_turn = velocity*h
-        
+        d = velocity * h
+        R = wheel_base / math.tan(theta_list[t])
+        delta_phi = d / R 
 
-        x = old_x + d_turn*math.sin((velocity*h*math.tan(theta_list[t]))/wheel_base)
-        y = old_y + d_turn*math.cos((velocity*h*math.tan(theta_list[t]))/wheel_base)
+        dx = R * (1 - math.cos(delta_phi))
+        dy = R * math.sin(delta_phi)
+
+        x = old_x + dx
+        y = old_y + dy
 
         map_x_list.append(x)
         map_y_list.append(y)
@@ -221,4 +234,20 @@ if __name__ == '__main__' :
     print(map_x_list)
     print(map_y_list)
     print(len(map_y_list))
+
+    init_x = map_x_list[0]
+    init_y = map_y_list[0]
+    final_x = map_x_list[-1]
+    final_y = map_y_list[-1]
+
+    plt.plot(map_x_list, map_y_list)
+    plt.scatter(init_x, init_y, c="green")
+    plt.scatter(final_x, final_y, c="red")
+    plt.xlabel("X Coordinates")
+    plt.ylabel("Y Coordinates")
+    plt.title("Plot of Bicycle Position")
+    plt.axis('equal')
+    plt.show()
+    plt.pause(1)
+    plt.close()
 
