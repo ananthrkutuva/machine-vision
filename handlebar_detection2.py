@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # Video path
 import os
-path = "data/SamplePOV5.mp4"
+path = "data/SamplePOV6.mp4"
 print(os.path.exists(path))
 
 
@@ -237,8 +237,8 @@ if __name__ == '__main__' :
 
     #Tune Theta list by callibrated value
     offset = -0.05 # add 0.05 rad to all values
-
-    theta_list = [theta + offset for theta in theta_list]
+    steer_scale = 10.0  # try 3–10× empirically
+    theta_list = [theta * steer_scale + offset for theta in theta_list]
 
 
     for t in range(len(t_list)):
