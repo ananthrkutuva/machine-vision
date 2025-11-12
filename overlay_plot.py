@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Make a dataframe from the GoPro GPS Data
-df = pd.read_csv("data/downhilldata.csv")
+df = pd.read_csv("data/olin.csv")
 
 # Take out the relevant data from the CSV File
 relevant_data = df[["date", "GPS (Lat.) [deg]", "GPS (Long.) [deg]"]]
@@ -18,7 +18,7 @@ longitude_list = df["GPS (Long.) [deg]"].to_list()
 # print(longitude_list)
 
 # Setup a projection using the pyproj library (lat long to meters)
-p = Proj(proj='utm',zone=10, ellps='WGS84', preserve_units=False)
+p = Proj(proj='utm',zone=19, ellps='WGS84', preserve_units=False)
 
 # Allocate x and y coordinates
 x_list_projected = []
