@@ -96,8 +96,8 @@ if __name__ == '__main__':
     h = delay / 1000
 
     # Apply calibration
-    offset = -0.038
-    steer_scale = 0.92
+    offset = -0.037
+    steer_scale = 1.06
     theta_list = [theta * steer_scale + offset for theta in theta_list]
 
     heading = 0.0
@@ -134,6 +134,7 @@ if __name__ == '__main__':
     plt.ylabel("Y Coordinates")
     plt.title("Plot of Bicycle Position")
     plt.axis('equal')
+    plt.legend([f'Offset = {offset}, Scale = {steer_scale}'])
     plt.show()
     plt.pause(1)
     plt.close()
