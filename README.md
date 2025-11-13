@@ -2,4 +2,6 @@
 
 CompRobo FA 2025 - Ananth Kutuva & Cian Linehan
 
-[View PDF](ComputerVisionProjectReport.pdf)
+[Project Report](ComputerVisionProjectReport.pdf)
+
+[Demo Video](https://www.youtube.com/watch?v=pO7YNCV9Df8)
