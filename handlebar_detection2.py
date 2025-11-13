@@ -15,8 +15,8 @@ if __name__ == '__main__' :
 
     tracker_type = 'CSRT'
     #BOOSTING, MIL, KCF, TLD, MEDIANFLOW, GOTURN, MOOSE
-    l_tracker = cv2.legacy.TrackerCSRT_create()
-    r_tracker = cv2.legacy.TrackerCSRT_create()
+    l_tracker = cv2.legacy.TrackerKCF_create()
+    r_tracker = cv2.legacy.TrackerKCF_create()
 
 
     #Read Video
@@ -34,15 +34,15 @@ if __name__ == '__main__' :
         sys.exit()
 
     #Create Bounding Boxes
-    l_bb_x = 350
-    l_bb_y = 600
-    l_bb_w = 450
-    l_bb_h = 230
+    l_bb_x = 300
+    l_bb_y = 820
+    l_bb_w = 420
+    l_bb_h = 150
 
-    r_bb_x = 1150
-    r_bb_y = 650
-    r_bb_w = 400
-    r_bb_h = 230
+    r_bb_x = 1080
+    r_bb_y = 820
+    r_bb_w = 420
+    r_bb_h = 150
    
 
     l_bbox = (l_bb_x, l_bb_y, l_bb_w, l_bb_h)
@@ -145,14 +145,16 @@ if __name__ == '__main__' :
         #Show
         cv2.imshow("L Greyscale ROI", l_grey)
         cv2.imshow("R Greyscale ROI", r_grey)
+        l_blur = cv2.GaussianBlur(l_grey, (5,5), 0)
+        r_blur = cv2.GaussianBlur(r_grey, (5,5), 0)
+        l_edges = cv2.Canny(l_blur, 150, 250, apertureSize=3)
+        r_edges = cv2.Canny(r_blur, 150, 250, apertureSize=3)
 
-        l_edges = cv2.Canny(l_grey, 150, 300, apertureSize=3)
-        r_edges = cv2.Canny(r_grey, 150, 300, apertureSize=3)
         cv2.imshow("L Edges ROI", l_edges)
         cv2.imshow("R Edges ROI", r_edges)
 
-        l_lines = cv2.HoughLinesP(l_edges, 1, np.pi/180, threshold=32, minLineLength=30, maxLineGap=15)
-        r_lines = cv2.HoughLinesP(r_edges, 1, np.pi/180, threshold=32, minLineLength=30, maxLineGap=15)
+        l_lines = cv2.HoughLinesP(l_edges, 1, np.pi/180, threshold=25, minLineLength=25, maxLineGap=15)
+        r_lines = cv2.HoughLinesP(r_edges, 1, np.pi/180, threshold=20, minLineLength=25, maxLineGap=15)
 
         b_thresh = 50
 
@@ -187,8 +189,8 @@ if __name__ == '__main__' :
         r_avg_mid_y = int(sum(r_mid_y_list) / len(r_mid_y_list))
 
 
-        l_roi_x = 250  # constant inside left ROI
-        l_roi_y = l_avg_mid_y  # y from average of Hough lines
+        l_roi_x = 150  # constant inside left ROI
+        l_roi_y = l_avg_mid_y - 20 # y from average of Hough lines
         # Convert to frame coordinates
         l_frame_x = int(l_bbox[0] + l_roi_x)
         l_frame_y = int(l_bbox[1] + l_roi_y)
@@ -196,8 +198,8 @@ if __name__ == '__main__' :
         # Draw in full frame
         cv2.circle(frame, (l_frame_x, l_frame_y), 8, (0, 0, 255), -1)
 
-        r_roi_x = 200  # constant inside right ROI
-        r_roi_y = r_avg_mid_y  # y from average of Hough lines
+        r_roi_x = 250  # constant inside right ROI
+        r_roi_y = r_avg_mid_y - 20  # y from average of Hough lines
 
         # Convert to frame coordinates
         r_frame_x = int(r_bbox[0] + r_roi_x)
@@ -213,7 +215,7 @@ if __name__ == '__main__' :
         cv2.imshow("Tracking", frame)
 
         #Go through the lines and calc line for tracking
-        angle_rad = math.atan2(r_frame_y-l_frame_y, r_frame_x-l_frame_x) # angle in radians
+        angle_rad = -math.atan2(r_frame_y-l_frame_y, r_frame_x-l_frame_x) # angle in radians
         theta_list.append(angle_rad)
 
         
@@ -223,40 +225,61 @@ if __name__ == '__main__' :
 
         
 
-    # print(theta_list)
-    # print(t_list)
-    # print(len(theta_list))
-    # print(len(t_list))
+    print(theta_list)
+    print(t_list)
+    print(len(theta_list))
+    print(len(t_list))
 
     map_x_list = [0]
     map_y_list = [0]
 
-    velocity = 3 #m/s constant change later
+    velocity = 2.5 #m/s constant change later
     wheel_base = 1.237 #meters
     h = delay/1000 #timestep in s
 
     #Tune Theta list by callibrated value
-    offset = -0.05 # add 0.05 rad to all values
-    steer_scale = 3  # try 3–10× empirically
+    offset = -0.05 # sub 0.05 rad to all values
+    steer_scale = 1  # try 3–10× empirically
     theta_list = [theta * steer_scale + offset for theta in theta_list]
 
+
+    heading = 0.0  # radians, global orientation
 
     for t in range(len(t_list)):
         old_x = map_x_list[-1]
         old_y = map_y_list[-1]
-        # print(t)
+
+        # distance travelled in this timestep
         d = velocity * h
-        R = wheel_base / math.tan(theta_list[t])
-        delta_phi = d / R 
+        theta = theta_list[t]
 
-        dx = R * (1 - math.cos(delta_phi)) * 100
-        dy = R * math.sin(delta_phi)
+        # Compute turning radius
+        epsilon = 1e-6
+        if abs(math.tan(theta)) < epsilon:
+            R = float('inf')  # straight
+            delta_phi = 0
+        else:
+            R = wheel_base / math.tan(theta)
+            delta_phi = d / R  # change in heading
 
+        # Local motion in vehicle frame (y-forward, x-right)
+        dx_local = 0         # lateral motion in vehicle frame = 0
+        dy_local = d         # forward motion
+
+        # Rotate local motion into global frame using current heading
+        dx = dx_local * math.cos(heading) - dy_local * math.sin(heading)
+        dy = dx_local * math.sin(heading) + dy_local * math.cos(heading)
+
+        # Update global position
         x = old_x + dx
         y = old_y + dy
 
+        # Update heading after moving
+        heading += delta_phi
+
         map_x_list.append(x)
         map_y_list.append(y)
+
 
     # print(map_x_list)
     # print(map_y_list)
@@ -273,7 +296,7 @@ if __name__ == '__main__' :
     plt.xlabel("X Coordinates")
     plt.ylabel("Y Coordinates")
     plt.title("Plot of Bicycle Position")
-    # plt.axis('equal')
+    plt.axis('equal')
     plt.show()
     plt.pause(1)
     plt.close()

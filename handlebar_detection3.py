@@ -4,6 +4,8 @@ import sys
 import math
 import matplotlib.pyplot as plt
 import os
+from pyproj import Proj
+import pandas as pd
 
 # Video path
 path = "data/GPSSamplePOV7.mp4"
@@ -80,7 +82,7 @@ if __name__ == '__main__':
 
         # Calculate angle
         angle_rad = -math.atan2(r_frame_y - l_frame_y,
-                                r_frame_x - l_frame_x)
+                                r_frame_x - l_frame_x) # the negative is because we are using +y = forward, +x = right of initial start
         theta_list.append(angle_rad)
 
         cv2.imshow("Tracking", frame)
@@ -91,7 +93,7 @@ if __name__ == '__main__':
     # Vehicle position plotting
     map_x_list = [0]
     map_y_list = [0]
-    velocity = 2.5
+    velocity = 2.6
     wheel_base = 1.237
     h = delay / 1000
 
@@ -127,14 +129,68 @@ if __name__ == '__main__':
         map_x_list.append(x)
         map_y_list.append(y)
 
-    plt.plot(map_x_list, map_y_list)
+
+    #####GPS##########
+
+    # === Adjustable parameters ===
+    rotation_deg = 225     # rotation angle in degrees (positive = counterclockwise)
+    x_offset = 18        # meters to shift east (+x)
+    y_offset = -55        # meters to shift north (+y)
+    # ==============================
+
+    # Make a dataframe from the GoPro GPS Data
+    df = pd.read_csv("data/olin.csv")
+
+    # Take out the relevant data from the CSV File
+    relevant_data = df[["date", "GPS (Lat.) [deg]", "GPS (Long.) [deg]"]]
+
+    # Separate the data into individual lists
+    latitude_list = df["GPS (Lat.) [deg]"].to_list()
+    longitude_list = df["GPS (Long.) [deg]"].to_list()
+
+    # Setup a projection using the pyproj library (lat/long → meters)
+    p = Proj(proj='utm', zone=19, ellps='WGS84', preserve_units=False)
+
+    # Convert to projected coordinates
+    x_list_projected = []
+    y_list_projected = []
+    for lat, lon in zip(latitude_list, longitude_list):
+        x_new, y_new = p(lon, lat)
+        x_list_projected.append(x_new)
+        y_list_projected.append(y_new)
+
+    # Shift data so the final point is at the origin (optional base alignment)
+    x_shift = x_list_projected[-1]
+    y_shift = y_list_projected[-1]
+
+    x_list_final = [x - x_shift for x in x_list_projected]
+    y_list_final = [y - y_shift for y in y_list_projected]
+
+    # === Apply rotation and offsets ===
+    theta = math.radians(rotation_deg)
+    x_rotated = []
+    y_rotated = []
+
+    for x, y in zip(x_list_final, y_list_final):
+        # rotation about origin
+        xr = x * math.cos(theta) - y * math.sin(theta)
+        yr = x * math.sin(theta) + y * math.cos(theta)
+        # add offsets
+        xr += x_offset
+        yr += y_offset
+        x_rotated.append(xr)
+        y_rotated.append(yr)
+
+    # === Plot results ===
+    plt.plot(x_rotated, y_rotated, label="GPS Data")
+    plt.plot(map_x_list, map_y_list, label=f'Handlebar Angle Approximation Data: Offset = {offset}, Scale = {steer_scale}')
     plt.scatter(map_x_list[0], map_y_list[0], c="green")
     plt.scatter(map_x_list[-1], map_y_list[-1], c="red")
     plt.xlabel("X Coordinates")
     plt.ylabel("Y Coordinates")
-    plt.title("Plot of Bicycle Position")
+    plt.title("Predicted vs Actual Map")
     plt.axis('equal')
-    plt.legend([f'Offset = {offset}, Scale = {steer_scale}'])
+    plt.legend()
     plt.show()
     plt.pause(1)
     plt.close()
